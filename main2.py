@@ -5,6 +5,18 @@ from moviepy.editor import VideoFileClip, AudioFileClip
 from threading import Thread
 
 
+# Função para converter tempo em minutos e segundos para segundos
+def time_to_seconds(minutes, seconds):
+    return minutes * 60 + seconds
+
+
+# Função para converter segundos para minutos e segundos
+def seconds_to_time(seconds):
+    minutes = seconds // 60
+    seconds = seconds % 60
+    return minutes, seconds
+
+
 # Função para baixar o vídeo do YouTube em alta resolução
 def download_video(url, resolution):
     try:
@@ -33,14 +45,19 @@ def download_video(url, resolution):
 
 
 # Função para combinar áudio e vídeo
-def combine_audio_video(video_path, audio_path):
+def combine_audio_video(video_path, audio_path, start_time=None, end_time=None):
     try:
         video = VideoFileClip(video_path)
         audio = AudioFileClip(audio_path)
         final_video = video.set_audio(audio)
+
+        # Aplicar corte se os tempos forem fornecidos
+        if start_time is not None and end_time is not None:
+            final_video = final_video.subclip(start_time, end_time)
+
         output_path = video_path.replace(".mp4", "_final.mp4")
-        final_video.write_videofile(output_path, codec="libx264", fps=45, threads=4,  preset="ultrafast")
-        # Processamento paralelo
+        final_video.write_videofile(output_path, codec="libx264", fps=50, threads=4, preset="ultrafast")
+
         return output_path
     except Exception as e:
         st.error(f"Erro ao combinar áudio e vídeo: {e}")
@@ -67,12 +84,36 @@ if video_url:
                        yt.streams.filter(only_video=True, file_extension='mp4').order_by('resolution')]
         resolution = st.selectbox("Selecione a resolução para download:", resolutions)
 
+        # Opção para baixar o vídeo completo ou cortado
+        download_option = st.radio("Você quer baixar o vídeo completo ou cortar o vídeo final?",
+                                   ("Completo", "Cortado"))
+
+        start_time = None
+        end_time = None
+
+        if download_option == "Cortado":
+            duration = yt.length
+            st.write(f"Duração total do vídeo: {duration // 60} minutos e {duration % 60} segundos")
+
+            # Slider de início do corte
+            start_minutes = st.slider("Minutos de início do corte:", 0, duration // 60, 0)
+            start_seconds = st.slider("Segundos de início do corte:", 0, 59, 0)
+            start_time = time_to_seconds(start_minutes, start_seconds)
+
+            # Slider de término do corte
+            end_minutes = st.slider("Minutos de término do corte:", 0, duration // 60, duration // 60)
+            end_seconds = st.slider("Segundos de término do corte:", 0, 59, duration % 60)
+            end_time = time_to_seconds(end_minutes, end_seconds)
+
+            if end_time <= start_time:
+                st.error("O tempo final deve ser maior que o tempo inicial.")
+
         if st.button("Baixar"):
             with st.spinner("Baixando e combinando vídeo e áudio..."):
                 video_path, audio_path = download_video(video_url, resolution)
                 if video_path and audio_path:
                     st.success(f"Vídeo e áudio baixados com sucesso na resolução {resolution}!")
-                    final_video_path = combine_audio_video(video_path, audio_path)
+                    final_video_path = combine_audio_video(video_path, audio_path, start_time, end_time)
                     st.success(f"Vídeo e áudio combinados com sucesso na resolução {resolution}!")
 
                     # Disponibilizar download do arquivo combinado
