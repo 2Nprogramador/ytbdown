@@ -66,7 +66,7 @@ def combine_audio_video(video_path, audio_path, start_time=None, end_time=None):
 
 # Configurar a interface do Streamlit
 st.title("YouTube Video Downloader")
-st.write("Baixe vídeos do YouTube em até 4K combinados como vídeo e áudio.")
+st.write("Baixe vídeos do YouTube em ALTA DEFINIÇÃO, faça cortes e poste nas Redes Sociais!")
 
 # Input do URL do vídeo do YouTube
 video_url = st.text_input("Insira a URL do vídeo do YouTube:")
