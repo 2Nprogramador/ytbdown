@@ -56,7 +56,7 @@ def combine_audio_video(video_path, audio_path, start_time=None, end_time=None):
             final_video = final_video.subclip(start_time, end_time)
 
         output_path = video_path.replace(".mp4", "_final.mp4")
-        final_video.write_videofile(output_path, codec="libx264", fps=50, threads=4, preset="ultrafast")
+        final_video.write_videofile(output_path, codec="libx264", fps=60, threads=4, preset="fast")
 
         return output_path
     except Exception as e:
